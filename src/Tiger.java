@@ -14,8 +14,8 @@ public class Tiger
 {
   public static void main(String[] args)
   {
-    InputStream fstream;
-    Parser parser;
+	  BufferedInputStream fstream;
+	  Parser parser;
 
     // ///////////////////////////////////////////////////////
     // handle command line arguments
@@ -28,7 +28,7 @@ public class Tiger
 
     // /////////////////////////////////////////////////////
     // it would be helpful to be able to test the lexer
-    // independently.
+    // independently.≤‚ ‘
     if (control.Control.testlexer) {
       System.out.println("Testing the lexer. All tokens:");
       try {
@@ -36,7 +36,7 @@ public class Tiger
         Lexer lexer = new Lexer(fname, fstream);
         Token token = lexer.nextToken();
         while (token.kind!=Kind.TOKEN_EOF){
-          System.out.println(token.toString());
+          //System.out.println(token.toString());
           token = lexer.nextToken();
         }
         fstream.close();

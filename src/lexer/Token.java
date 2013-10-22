@@ -32,6 +32,7 @@ public class Token
     TOKEN_MAIN, // "main"
     TOKEN_NEW, // "new"
     TOKEN_NOT, // "!"
+    TOKEN_NOTE,//"//"
     TOKEN_NUM, // IntegerLiteral
     // "out" is not a Java key word, but we treat it as
     // a MiniJava keyword, which will make the

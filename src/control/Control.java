@@ -6,7 +6,7 @@ public class Control
   public static boolean testlexer = false;
   
   // lexer and parser
-  public static boolean lex = false;
+  public static boolean lex = true;
 
   // elaborator
   public static boolean elabClassTable = false;

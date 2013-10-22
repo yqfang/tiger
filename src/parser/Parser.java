@@ -1,5 +1,9 @@
 package parser;
 
+import java.util.LinkedList;
+
+import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
+
 import lexer.Lexer;
 import lexer.Token;
 import lexer.Token.Kind;
@@ -8,11 +12,16 @@ public class Parser
 {
   Lexer lexer;
   Token current;
+  LinkedList<Token> queuekindbuffer=new LinkedList<Token>();
 
-  public Parser(String fname, java.io.InputStream fstream)
+  public Parser(String fname, java.io.BufferedInputStream fstream)
   {
     lexer = new Lexer(fname, fstream);
-    current = lexer.nextToken();
+    current=lexer.nextToken();
+    while(current.kind == Kind.TOKEN_NOTE)
+    {
+    	current = lexer.nextToken();
+    }
   }
 
   // /////////////////////////////////////////////
@@ -21,7 +30,14 @@ public class Parser
 
   private void advance()
   {
-    current = lexer.nextToken();
+	  if(queuekindbuffer.isEmpty())
+	    	current = lexer.nextToken();
+	  else
+	    	current=queuekindbuffer.removeFirst();
+    while(current.kind == Kind.TOKEN_NOTE)
+    {
+    	current = lexer.nextToken();
+    }
   }
 
   private void eatToken(Kind kind)
@@ -85,6 +101,9 @@ public class Parser
     case TOKEN_TRUE:
       advance();
       return;
+    case TOKEN_FALSE:
+    	advance();
+    	return;
     case TOKEN_THIS:
       advance();
       return;
@@ -211,10 +230,64 @@ public class Parser
   // -> id [ Exp ]= Exp ;
   private void parseStatement()
   {
-    // Lab1. Exercise 4: Fill in the missing code
-    // to parse a statement.
-    new util.Todo();
-  }
+    switch(current.kind){
+    case TOKEN_LBRACE:
+    	advance();
+    	parseStatements();
+    	eatToken(Kind.TOKEN_RBRACE);
+    	return;
+    case TOKEN_IF:
+    	advance();
+    	eatToken(Kind.TOKEN_LPAREN);
+    	parseExp();
+    	eatToken(Kind.TOKEN_RPAREN);
+    	parseStatement();
+    	eatToken(Kind.TOKEN_ELSE);
+    	parseStatement();
+    	return;
+    case TOKEN_WHILE:
+    	advance();
+    	eatToken(Kind.TOKEN_LPAREN);
+    	parseExp();
+    	eatToken(Kind.TOKEN_RPAREN);
+    	parseStatement();
+    	return;
+    case TOKEN_SYSTEM:
+    	advance();
+    	eatToken(Kind.TOKEN_DOT);
+    	eatToken(Kind.TOKEN_OUT);
+    	eatToken(Kind.TOKEN_DOT);
+    	eatToken(Kind.TOKEN_PRINTLN);
+    	eatToken(Kind.TOKEN_LPAREN);
+    	parseExp();
+    	eatToken(Kind.TOKEN_RPAREN);
+    	eatToken(Kind.TOKEN_SEMI);
+    	return;
+    case TOKEN_ID:
+    	advance();
+    	switch(current.kind){
+    	case TOKEN_ASSIGN:
+    		advance();
+    		parseExp();
+    		eatToken(Kind.TOKEN_SEMI);
+    		return;
+    	case TOKEN_LBRACK:
+    		advance();
+    		parseExp();
+    		eatToken(Kind.TOKEN_RBRACK);
+    		eatToken(Kind.TOKEN_ASSIGN);
+    		parseExp();
+    		eatToken(Kind.TOKEN_SEMI);
+    		return;
+    	default:
+    		error();
+    		return;
+    	}
+    default:
+    	error();
+    	return;
+    }
+   }
 
   // Statements -> Statement Statements
   // ->
@@ -234,9 +307,25 @@ public class Parser
   // -> id
   private void parseType()
   {
-    // Lab1. Exercise 4: Fill in the missing code
-    // to parse a type.
-    new util.Todo();
+    switch(current.kind){
+    case TOKEN_INT:
+    	advance();
+    	if(current.kind==Kind.TOKEN_LBRACK){
+    		advance();
+    		eatToken(Kind.TOKEN_RBRACK);
+    		return;
+    	}
+    	return;
+    case TOKEN_BOOLEAN:
+    	advance();
+    	return;
+    case TOKEN_ID:
+    	advance();
+    	return;
+    default:
+    	error();
+    	return;
+    }
   }
 
   // VarDecl -> Type id ;
@@ -256,7 +345,20 @@ public class Parser
   {
     while (current.kind == Kind.TOKEN_INT || current.kind == Kind.TOKEN_BOOLEAN
         || current.kind == Kind.TOKEN_ID) {
-      parseVarDecl();
+    	queuekindbuffer.addLast(current);
+    	current=lexer.nextToken();
+    	while(current.kind==Kind.TOKEN_NOTE){
+    		current=lexer.nextToken();
+    	}
+    	queuekindbuffer.addLast(current);
+    	if(current.kind==Kind.TOKEN_ASSIGN){
+    		current=queuekindbuffer.removeFirst();
+    		return;
+    	}
+    	else{
+    		current=queuekindbuffer.removeFirst();
+    		parseVarDecl();
+    	}
     }
     return;
   }
@@ -283,9 +385,19 @@ public class Parser
   // { VarDecl* Statement* return Exp ;}
   private void parseMethod()
   {
-    // Lab1. Exercise 4: Fill in the missing code
-    // to parse a method.
-    new util.Todo();
+    eatToken(Kind.TOKEN_PUBLIC);
+    parseType();
+    eatToken(Kind.TOKEN_ID);
+    eatToken(Kind.TOKEN_LPAREN);
+    parseFormalList();
+    eatToken(Kind.TOKEN_RPAREN);
+    eatToken(Kind.TOKEN_LBRACE);
+    parseVarDecls();
+    parseStatements();
+    eatToken(Kind.TOKEN_RETURN);
+    parseExp();
+    eatToken(Kind.TOKEN_SEMI);
+    eatToken(Kind.TOKEN_RBRACE);
     return;
   }
 
@@ -335,10 +447,23 @@ public class Parser
   // }
   private void parseMainClass()
   {
-    // Lab1. Exercise 4: Fill in the missing code
-    // to parse a main class as described by the
-    // grammar above.
-    new util.Todo();
+    eatToken(Kind.TOKEN_CLASS);
+    eatToken(Kind.TOKEN_ID);
+    eatToken(Kind.TOKEN_LBRACE);
+    eatToken(Kind.TOKEN_PUBLIC);
+    eatToken(Kind.TOKEN_STATIC);
+    eatToken(Kind.TOKEN_VOID);
+    eatToken(Kind.TOKEN_MAIN);
+    eatToken(Kind.TOKEN_LPAREN);
+    eatToken(Kind.TOKEN_STRING);
+    eatToken(Kind.TOKEN_LBRACK);
+    eatToken(Kind.TOKEN_RBRACK);
+    eatToken(Kind.TOKEN_ID);
+    eatToken(Kind.TOKEN_RPAREN);
+    eatToken(Kind.TOKEN_LBRACE);
+    parseStatement();
+    eatToken(Kind.TOKEN_RBRACE);
+    eatToken(Kind.TOKEN_RBRACE);
   }
 
   // Program -> MainClass ClassDecl*
@@ -346,7 +471,7 @@ public class Parser
   {
     parseMainClass();
     parseClassDecls();
-    eatToken(Kind.TOKEN_EOF);
+   // eatToken(Kind.TOKEN_EOF);
     return;
   }
 
