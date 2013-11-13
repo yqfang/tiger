@@ -1,21 +1,18 @@
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.InputStream;
 
 import lexer.Lexer;
 import lexer.Token;
 import lexer.Token.Kind;
-
-import control.CommandLine;
-
 import parser.Parser;
+import control.CommandLine;
 
 public class Tiger
 {
   public static void main(String[] args)
   {
-    InputStream fstream;
-    Parser parser;
+	  BufferedInputStream fstream;
+	  Parser parser;
 
     // ///////////////////////////////////////////////////////
     // handle command line arguments
@@ -46,8 +43,9 @@ public class Tiger
         fstream = new BufferedInputStream(new FileInputStream(fname));
         Lexer lexer = new Lexer(fname, fstream);
         Token token = lexer.nextToken();
-        while (token.kind != Kind.TOKEN_EOF) {
-          System.out.println(token.toString());
+        
+        while (token.kind!=Kind.TOKEN_EOF){
+          //System.out.println(token.toString());
           token = lexer.nextToken();
         }
         fstream.close();
