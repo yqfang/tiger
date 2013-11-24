@@ -4,8 +4,8 @@ import java.io.BufferedInputStream;
 import java.util.LinkedList;
 
 import lexer.Token.Kind;
-import util.Todo;
 import util.SynbollMap;
+import util.Todo;
 
 public class Lexer {
 	LinkedList<Integer> queuebuff = new LinkedList<Integer>();
