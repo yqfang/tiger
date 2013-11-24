@@ -526,7 +526,6 @@ public class Parser
   {
     eatToken(Kind.TOKEN_CLASS);
     String id=eatToken(Kind.TOKEN_ID).lexeme;
-    System.out.println(id);
     eatToken(Kind.TOKEN_LBRACE);
     eatToken(Kind.TOKEN_PUBLIC);
     eatToken(Kind.TOKEN_STATIC);
@@ -537,7 +536,6 @@ public class Parser
     eatToken(Kind.TOKEN_LBRACK);
     eatToken(Kind.TOKEN_RBRACK);
     String arg=eatToken(Kind.TOKEN_ID).lexeme;
-    System.out.println(arg);
     eatToken(Kind.TOKEN_RPAREN);
     eatToken(Kind.TOKEN_LBRACE);
     ast.stm.T statement=parseStatement();
