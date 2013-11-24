@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main (int argc, char **argv)
+int System_out_println (int i)
 {
-  Tiger_main ();
+  printf ("%d\n", i);
   return 0;
 }

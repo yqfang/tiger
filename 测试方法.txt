@@ -1,0 +1,5 @@
+//测试方法：到test目录下
+//1.生成c代码(前提安装gcc)，进入test-c首先运行bat生成.c文件，然后请手动添加main方法，然后用gcc编译
+
+//2.生成bytecode，进入test-bytecode直接运行test.bat出结果
+如有疑问：qq：404762352

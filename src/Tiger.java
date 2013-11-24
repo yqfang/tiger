@@ -1,22 +1,24 @@
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.InputStream;
 
 import lexer.Lexer;
 import lexer.Token;
 import lexer.Token.Kind;
-
+import parser.Parser;
 import control.CommandLine;
 import control.Control;
+//测试方法：到test目录下
+//1.生成c代码，首先运行bat生成.c文件，然后请手动添加main方法，然后用gcc编译
 
-import parser.Parser;
+//2.生成bytecode，直接运行test.bat出结果
+//qq:404762352
 
 public class Tiger
 {
   public static void main(String[] args)
   {
-    InputStream fstream;
-    Parser parser;
+	  BufferedInputStream fstream;
+	  Parser parser;
 
     // ///////////////////////////////////////////////////////
     // handle command line arguments
@@ -66,8 +68,9 @@ public class Tiger
         fstream = new BufferedInputStream(new FileInputStream(fname));
         Lexer lexer = new Lexer(fname, fstream);
         Token token = lexer.nextToken();
-        while (token.kind != Kind.TOKEN_EOF) {
-          System.out.println(token.toString());
+        
+        while (token.kind!=Kind.TOKEN_EOF){
+          //System.out.println(token.toString());
           token = lexer.nextToken();
         }
         fstream.close();

@@ -63,12 +63,56 @@ public class PrettyPrintVisitor implements Visitor
     this.isayln("astore " + s.index);
     return;
   }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Iaload s)
+  {
+	  this.isayln("iaload");
+	  return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Arraylength s)
+  {
+	  this.isayln("arraylength");
+	  return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Iastore s)
+  {
+	  this.isayln("iastore");
+	  return;
+  }
 
   @Override
   public void visit(codegen.bytecode.stm.Goto s)
   {
     this.isayln("goto " + s.l.toString());
     return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Getfield s)
+  {
+	  this.say("    getfield "+s.classname+"/"+s.fieldname+" ");
+	  s.type.accept(this);
+	  this.say("\n");
+	  return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Iadd s)
+  {
+	  this.isayln("iadd");
+	  return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Iand s)
+  {
+	  this.isayln("iand");
+	  return;
   }
 
   @Override
@@ -155,6 +199,13 @@ public class PrettyPrintVisitor implements Visitor
     this.isayln("invokespecial " + s.c + "/<init>()V");
     return;
   }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Newarray s)
+  {
+	  this.isayln("newarray int");
+	  return;
+  }
 
   @Override
   public void visit(codegen.bytecode.stm.Print s)
@@ -163,6 +214,15 @@ public class PrettyPrintVisitor implements Visitor
     this.isayln("swap");
     this.isayln("invokevirtual java/io/PrintStream/println(I)V");
     return;
+  }
+  
+  @Override
+  public void visit(codegen.bytecode.stm.Putfield s)
+  {
+	  this.say("    putfield "+s.classname+"/"+s.field+" ");
+	  s.type.accept(this);
+	  this.say("\n");
+	  return;
   }
 
   // type
@@ -238,7 +298,7 @@ public class PrettyPrintVisitor implements Visitor
     // fields
     for (codegen.bytecode.dec.T d : c.decs) {
       codegen.bytecode.dec.Dec dd = (codegen.bytecode.dec.Dec) d;
-      this.say(".field public " + dd.id);
+      this.say(".field public " + dd.id+" ");
       dd.type.accept(this);
       this.sayln("");
     }

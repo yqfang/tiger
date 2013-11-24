@@ -110,7 +110,7 @@ public class CommandLine
           @Override
           public void f(Object s)
           {
-            Control.lex = true;
+            Control.lex = false;
             return;
           }
         }), new Arg<Object>("output", "<outfile>", "set the name of the output file",

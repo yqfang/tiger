@@ -55,16 +55,30 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.exp.Add e)
   {
+	  e.left.accept(this);
+	  this.say("+");
+	  e.right.accept(this);
+	  return;
   }
 
   @Override
   public void visit(codegen.C.exp.And e)
   {
+	  e.left.accept(this);
+	  this.say("&&");
+	  e.right.accept(this);
+	  return;
   }
 
   @Override
   public void visit(codegen.C.exp.ArraySelect e)
   {
+	  this.say("*(");
+	  e.array.accept(this);
+	  this.say("->array+(");
+	  e.index.accept(this);
+	  this.say("))");
+	  return;
   }
 
   @Override
@@ -96,6 +110,9 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.exp.Length e)
   {
+	  e.array.accept(this);
+	  this.say("->length");
+	  return;
   }
 
   @Override
@@ -110,6 +127,10 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.exp.NewIntArray e)
   {
+	  this.say("(struct IntArray *)(Tiger_new_array(");
+	  e.exp.accept(this);
+	  this.say("))");
+	  return;
   }
 
   @Override
@@ -123,6 +144,11 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.exp.Not e)
   {
+	  this.say("!");
+	  this.say("(");
+	  e.exp.accept(this);
+	  this.say(")");
+	  return;
   }
 
   @Override
@@ -144,7 +170,7 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.exp.This e)
   {
-    this.say("this");
+    this.say("thiss");
   }
 
   @Override
@@ -163,18 +189,34 @@ public class PrettyPrintVisitor implements Visitor
     this.printSpaces();
     this.say(s.id + " = ");
     s.exp.accept(this);
-    this.say(";");
+    this.say(";\n");
     return;
   }
 
   @Override
   public void visit(codegen.C.stm.AssignArray s)
   {
+	  this.printSpaces();
+	  this.say("*("+s.id+"->array+(");
+	  s.index.accept(this);
+	  this.say(")) = ");
+	  s.exp.accept(this);
+	  this.printSpaces();
+	  this.sayln(";");
+	  return;
   }
 
   @Override
   public void visit(codegen.C.stm.Block s)
   {
+	  this.printSpaces();
+	  this.say("{");
+	  this.say("\n");
+	  for(codegen.C.stm.T as:s.stms)
+		  as.accept(this);
+	  this.printSpaces();
+	  this.sayln("}");
+	  return;
   }
 
   @Override
@@ -200,16 +242,25 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.stm.Print s)
   {
-    this.printSpaces();
-    this.say("System_out_println (");
-    s.exp.accept(this);
-    this.sayln(");");
-    return;
+	  this.printSpaces();
+	  this.say("System_out_println (");
+	  s.exp.accept(this);
+	  this.sayln(");");
+	  return;
   }
 
   @Override
   public void visit(codegen.C.stm.While s)
   {
+	  this.printSpaces();
+	  this.say("while(");
+	  s.condition.accept(this);
+	  this.sayln(")");
+	  this.indent();
+	  s.body.accept(this);
+	  this.unIndent();
+	  this.sayln("");
+	  return;
   }
 
   // type
@@ -228,12 +279,23 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(codegen.C.type.IntArray t)
   {
+	  this.say("struct IntArray\n");
+	  this.say("{\n");
+	  this.indent();
+	  this.say("int length;\n");
+	  this.say("int *array;\n");
+	  this.unIndent();
+	  this.say("} *");
+	  return;
   }
 
   // dec
   @Override
   public void visit(codegen.C.dec.Dec d)
   {
+	  d.type.accept(this);
+	  this.say(" "+d.id+";\n");
+	  return;
   }
 
   // method
@@ -296,7 +358,20 @@ public class PrettyPrintVisitor implements Visitor
     for (codegen.C.Ftuple t : v.ms) {
       this.say("  ");
       t.ret.accept(this);
-      this.sayln(" (*" + t.id + ")();");
+      this.say(" (*" + t.id + ")("+"struct "+v.id+" * thiss");
+      if(t.args.isEmpty())
+    	  ;
+      else
+    	  this.say(",");
+      for(codegen.C.dec.T decal:t.args)
+      {
+    	  codegen.C.dec.Dec formal=(codegen.C.dec.Dec)decal;
+    	  formal.type.accept(this);
+    	  this.say(" "+formal.id);
+    	  if(decal!=t.args.getLast())
+    		  this.say(",");
+      }
+      this.sayln(");");
     }
     this.sayln("};\n");
     return;
@@ -306,9 +381,14 @@ public class PrettyPrintVisitor implements Visitor
   {
     this.sayln("struct " + v.id + "_vtable " + v.id + "_vtable_ = ");
     this.sayln("{");
+    int size=v.ms.size();
     for (codegen.C.Ftuple t : v.ms) {
+      --size;
       this.say("  ");
-      this.sayln(t.classs + "_" + t.id + ",");
+      this.say(t.classs + "_" + t.id);
+      if(size!=0)
+    	  this.say(",");
+      this.say("\n");
     }
     this.sayln("};\n");
     return;
@@ -347,6 +427,7 @@ public class PrettyPrintVisitor implements Visitor
 
       this.writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(
           new java.io.FileOutputStream(outputName)));
+      this.writer.write("#include \"include/lib.c\" \n#include \"include/gc.c\"\n");
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
@@ -383,7 +464,8 @@ public class PrettyPrintVisitor implements Visitor
     this.sayln("");
 
     this.say("\n\n");
-
+    this.say("int main (int argc, char **argv)" + 
+"{\nTiger_main ();\nreturn 0;}");
     try {
       this.writer.close();
     } catch (Exception e) {

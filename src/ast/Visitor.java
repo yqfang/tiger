@@ -1,9 +1,11 @@
 package ast;
 
+import ast.exp.Add;
+
 public interface Visitor
 {
   // expressions
-  public void visit(ast.exp.Add e);
+  public void visit(ast.exp.Parent e);
 
   public void visit(ast.exp.And e);
 
@@ -71,4 +73,7 @@ public interface Visitor
 
   // program
   public void visit(ast.program.Program p);
+
+  public void visit(Add e);
+
 }

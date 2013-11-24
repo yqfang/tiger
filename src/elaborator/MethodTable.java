@@ -11,7 +11,15 @@ public class MethodTable
     this.table = new java.util.Hashtable<String, ast.type.T>();
   }
 
-  // Duplication is not allowed
+  public java.util.Hashtable<String, ast.type.T> getTable() {
+	return table;
+}
+
+public void setTable(java.util.Hashtable<String, ast.type.T> table) {
+	this.table = table;
+}
+
+// Duplication is not allowed
   public void put(java.util.LinkedList<ast.dec.T> formals,
       java.util.LinkedList<ast.dec.T> locals)
   {
