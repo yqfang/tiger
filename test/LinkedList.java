@@ -98,7 +98,7 @@ class List{
 	aux03 = this ;
 	aux02 = new List();
 	ret_val = aux02.InitNew(new_elem,aux03,false);
-	return aux02 ;
+	return aux03 ;
     }
     
     
