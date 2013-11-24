@@ -31,7 +31,7 @@ public class Lexer {
 			c = queuebuff.removeFirst();
 		// skip all kinds of "blanks"
 		while (' ' == c || 9 == c || 13 == c || 10 == c) {
-			if (c == 13) {
+			if (c == 13 || c == 10) {
 				LineNum++;
 			}
 			c = this.fstream.read();
@@ -125,8 +125,6 @@ public class Lexer {
 				c = this.fstream.read();
 				if (c == '/') {
 					c = this.fstream.read();
-					System.out.println("At" + " Line " + LineNum
-							+ ": '//' Annotation！");// 打印输出
 					while (10 != c) {// 知道读到回车
 						c = this.fstream.read();
 					}
