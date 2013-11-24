@@ -8,24 +8,22 @@ class Monster
 
 class Foo
 {
-	public int foo()
-	{
-		int sum;
-        int[] a;
-        
-        a[10]=1;
-        a=new int[10];
-		sum = 0;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		sum = sum + 1;
-		return sum;
-	}
+	int i;
+	int[] num;
+    public int foo()
+    {
+    	
+    		int j;
+    		j=5;
+    		num=new int[2];
+    		num[0]=1;
+    		num[1]=2;
+            while(!(j<0))
+            {
+            	i=num[1]+num[0];
+            	i=i+j;
+            	j=j-1;
+            }
+            return i;
+    }
 }

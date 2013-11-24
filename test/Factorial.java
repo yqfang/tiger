@@ -1,9 +1,5 @@
-<<<<<<< HEAD:test/Factorial.java
-class Factorial { 
-=======
-//12222
-class Factorial { //12222
->>>>>>> Lab1:test/Factorial.java
+class Factorial {
+
 	public static void main(String[] a) {
         System.out.println(new Fac().ComputeFac(10));
     }
