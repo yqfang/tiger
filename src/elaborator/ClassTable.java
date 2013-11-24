@@ -1,6 +1,6 @@
 package elaborator;
 
-import util.Todo;
+import java.util.Enumeration;
 
 public class ClassTable
 {
@@ -81,7 +81,17 @@ public class ClassTable
 
   public void dump()
   {
-    new Todo();
+	  Enumeration<String>  keys =  table.keys();
+	  Enumeration<ClassBinding>  values = table.elements();
+	  
+	  if(table.size() == 0)
+		  System.out.println("no");
+	  while(keys.hasMoreElements())
+	  {
+		  String key = keys.nextElement();
+		  System.out.println("String:"+key);
+		 System.out.println("String:"+ table.get(key).toString());
+	  }
   }
 
   @Override
