@@ -12,6 +12,9 @@ for %%i in (*.j) do java -jar jasmin.jar %%i
 @echo result-of-BinaryTree ==================================================> result.txt
 java BinaryTree >> result.txt
 
+@echo result-of-TreeVisitor ==================================================>> result.txt
+java TreeVisitor >> result.txt
+
 @echo result-of-BinarySearch ==================================================>> result.txt
 java BinarySearch >> result.txt
 
