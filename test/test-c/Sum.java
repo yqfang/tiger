@@ -2,7 +2,7 @@ class Monster
 {
 	public static void main(String[] args)
 	{
-		System.out.println(new Foo().foo());
+		System.out.println(new Foo().foo(new Foo()));
 	}
 }
 
@@ -10,7 +10,7 @@ class Foo
 {
 	int i;
 	int[] num;
-    public int foo()
+    public int foo(Foo F)
     {
     	
     		int j;
