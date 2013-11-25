@@ -2,10 +2,6 @@ package parser;
 
 import java.util.LinkedList;
 
-import ast.stm.T;
-
-import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
-
 import lexer.Lexer;
 import lexer.Token;
 import lexer.Token.Kind;

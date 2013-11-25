@@ -82,7 +82,6 @@ public class ClassTable
   public void dump()
   {
 	  Enumeration<String>  keys =  table.keys();
-	  Enumeration<ClassBinding>  values = table.elements();
 	  
 	  if(table.size() == 0)
 		  System.out.println("no");

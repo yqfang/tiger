@@ -1,6 +1,5 @@
 package elaborator;
 
-import util.Todo;
 
 public class MethodTable
 {
