@@ -1,6 +1,8 @@
 package codegen.C;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import codegen.C.dec.Dec;
@@ -11,6 +13,7 @@ public class PrettyPrintVisitor implements Visitor {
 	private java.io.BufferedWriter writer;
 	private String methodName = "";
 	private String locals = "";
+	private Map<String, String> TupleGCMap = new HashMap<String, String>();
 
 	public PrettyPrintVisitor() {
 		this.indentLevel = 2;
@@ -397,7 +400,7 @@ public class PrettyPrintVisitor implements Visitor {
 		this.methodName = "yes";
 		for (codegen.C.stm.T s : m.stms)
 			s.accept(this);
-		this.say("void *tmp = prev;\n\tprev = frame.prev;\n\tfree(tmp);\n\t");
+		this.say("prev = frame.prev;");
 		this.say("  return ");
 		m.retExp.accept(this);
 		this.sayln(";");
@@ -472,8 +475,10 @@ public class PrettyPrintVisitor implements Visitor {
 	// vtables
 	@Override
 	public void visit(codegen.C.vtable.Vtable v) {
+		
 		this.sayln("struct " + v.id + "_vtable");
 		this.sayln("{");
+		this.sayln("\tchar *" + v.id +"_gc_map; ");
 		for (codegen.C.Ftuple t : v.ms) {
 			this.say("  ");
 			t.ret.accept(this);
@@ -498,6 +503,8 @@ public class PrettyPrintVisitor implements Visitor {
 	private void outputVtable(codegen.C.vtable.Vtable v) {
 		this.sayln("struct " + v.id + "_vtable " + v.id + "_vtable_ = ");
 		this.sayln("{");
+		String str = this.TupleGCMap.get(v.id + "_vtable");
+		this.sayln("\"" + str + "\",");
 		int size = v.ms.size();
 		for (codegen.C.Ftuple t : v.ms) {
 			--size;
@@ -517,13 +524,29 @@ public class PrettyPrintVisitor implements Visitor {
 		this.sayln("struct " + c.id);
 		this.sayln("{");
 		this.sayln("  struct " + c.id + "_vtable *vptr;");
+		
+		String str = "";
 		for (codegen.C.Tuple t : c.decs) {
+			String strtmp = t.type.toString();
+			if(!strtmp.equals("@int"))
+			{
+				str += "1";
+			}
+			else
+			{
+				str += "0";
+			}
 			this.say("  ");
 			t.type.accept(this);
 			this.say(" ");
 			this.sayln(t.id + ";");
 		}
 		this.sayln("};");
+		if(str.isEmpty())
+		{
+			str = "2";
+		}
+		this.TupleGCMap.put(c.id + "_vtable", str);
 		return;
 	}
 
