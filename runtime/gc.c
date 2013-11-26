@@ -37,20 +37,20 @@ void Tiger_heap_init (int heapSize)
 {
   // You should write 7 statement here:
   // #1: allocate a chunk of memory of size "heapSize" using "malloc"
-
+	char *p = malloc(heapSize);
   // #2: initialize the "size" field, note that "size" field
   // is for semi-heap, but "heapSize" is for the whole heap.
-
+	heap.size = heapSize / 2;
   // #3: initialize the "from" field (with what value?)
-
+	heap.from = p;
   // #4: initialize the "fromFree" field (with what value?)
-
+	heap.fromFree = p + size;
   // #5: initialize the "to" field (with what value?)
-
+	heap.to = p + size - 1;
   // #6: initizlize the "toStart" field with NULL;
-
+	heap.toStart = NULL;
   // #7: initialize the "toNext" field with NULL;
-
+	heap.toNext = NULL;
   return;
 }
 

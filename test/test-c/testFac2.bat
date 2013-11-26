@@ -1,5 +1,5 @@
-java -cp ../../bin Tiger -codegen C Factorial2.java
-gcc -o Factorial2 Factorial2.java.c 
-Factorial2  > testFac.txt
+java -cp ../../bin Tiger -codegen C Factorial.java
+gcc -o Factorial Factorial.java.c 
+Factorial  > testFac.txt
 testFac.txt
 del testFac.txt

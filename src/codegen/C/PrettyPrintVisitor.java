@@ -2,6 +2,7 @@ package codegen.C;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,11 +86,10 @@ public class PrettyPrintVisitor implements Visitor {
 		String str = "";
 		String[] strs = this.locals.split(",");
 		Set<String> set = new HashSet<String>();
-		for(int i = 0; i < strs.length; i++)
-		{
+		for (int i = 0; i < strs.length; i++) {
 			set.add(strs[i]);
 		}
-		
+
 		if (!methodName.equals("")) {
 			if (e.assign.startsWith("thiss") || !set.contains(e.assign)) {
 				str = e.assign;
@@ -123,11 +123,10 @@ public class PrettyPrintVisitor implements Visitor {
 		String str = "";
 		String[] strs = this.locals.split(",");
 		Set<String> set = new HashSet<String>();
-		for(int i = 0; i < strs.length; i++)
-		{
+		for (int i = 0; i < strs.length; i++) {
 			set.add(strs[i]);
 		}
-		
+
 		if (!methodName.equals("")) {
 			if (e.id.startsWith("thiss") || !set.contains(e.id)) {
 				str = e.id;
@@ -213,11 +212,10 @@ public class PrettyPrintVisitor implements Visitor {
 		String str = "";
 		String[] strs = this.locals.split(",");
 		Set<String> set = new HashSet<String>();
-		for(int i = 0; i < strs.length; i++)
-		{
+		for (int i = 0; i < strs.length; i++) {
 			set.add(strs[i]);
 		}
-		
+
 		if (!methodName.equals("")) {
 			if (s.id.startsWith("thiss") || !set.contains(s.id)) {
 				str = s.id;
@@ -384,7 +382,6 @@ public class PrettyPrintVisitor implements Visitor {
 				+ "_locals_gc_map;\n\t");
 
 		this.sayln("");
-		
 
 		for (codegen.C.dec.T d : m.locals) {
 			String strtmp = " ";
@@ -394,9 +391,7 @@ public class PrettyPrintVisitor implements Visitor {
 				this.say("\t");
 			}
 		}
-		
-		
-		
+
 		this.methodName = "yes";
 		for (codegen.C.stm.T s : m.stms)
 			s.accept(this);
@@ -421,7 +416,7 @@ public class PrettyPrintVisitor implements Visitor {
 			String strtmp = " ";
 			strtmp = ((Dec) d).getType().toString();
 			if (!strtmp.equals("@int")) {
-				this.locals += ((Dec)d).getId() + ",";
+				this.locals += ((Dec) d).getId() + ",";
 				d.accept(this);
 				this.say("\t");
 			}
@@ -449,7 +444,7 @@ public class PrettyPrintVisitor implements Visitor {
 			String strtmp = " ";
 			strtmp = ((Dec) d).getType().toString();
 			if (!strtmp.equals("@int")) {
-				numlocalrefs ++;
+				numlocalrefs++;
 			}
 		}
 		this.say("char *" + m.classId + "_" + m.id + "_locals_gc_map = \""
@@ -475,10 +470,10 @@ public class PrettyPrintVisitor implements Visitor {
 	// vtables
 	@Override
 	public void visit(codegen.C.vtable.Vtable v) {
-		
+
 		this.sayln("struct " + v.id + "_vtable");
 		this.sayln("{");
-		this.sayln("\tchar *" + v.id +"_gc_map; ");
+		this.sayln("\tchar *" + v.id + "_gc_map; ");
 		for (codegen.C.Ftuple t : v.ms) {
 			this.say("  ");
 			t.ret.accept(this);
@@ -524,16 +519,13 @@ public class PrettyPrintVisitor implements Visitor {
 		this.sayln("struct " + c.id);
 		this.sayln("{");
 		this.sayln("  struct " + c.id + "_vtable *vptr;");
-		
+
 		String str = "";
 		for (codegen.C.Tuple t : c.decs) {
 			String strtmp = t.type.toString();
-			if(!strtmp.equals("@int"))
-			{
+			if (!strtmp.equals("@int")) {
 				str += "1";
-			}
-			else
-			{
+			} else {
 				str += "0";
 			}
 			this.say("  ");
@@ -542,8 +534,7 @@ public class PrettyPrintVisitor implements Visitor {
 			this.sayln(t.id + ";");
 		}
 		this.sayln("};");
-		if(str.isEmpty())
-		{
+		if (str.isEmpty()) {
 			str = "2";
 		}
 		this.TupleGCMap.put(c.id + "_vtable", str);
@@ -588,15 +579,32 @@ public class PrettyPrintVisitor implements Visitor {
 		}
 		this.sayln("");
 
-		this.sayln("// methods");
+		this.sayln("//method declar");
 		for (codegen.C.method.T m : p.methods) {
-			m.accept(this);
+			codegen.C.method.Method methoddeclar = (codegen.C.method.Method) m;
+			methoddeclar.retType.accept(this);
+			this.say(" " + methoddeclar.classId + "_" + methoddeclar.id + "(");
+			int size = methoddeclar.formals.size();
+			for (codegen.C.dec.T d : methoddeclar.formals) {
+				codegen.C.dec.Dec dec = (codegen.C.dec.Dec) d;
+				size--;
+				dec.type.accept(this);
+				this.say(" " + dec.id);
+				if (size > 0)
+					this.say(", ");
+			}
+			this.sayln(");");
 		}
-		this.sayln("");
 
 		this.sayln("// vtables");
 		for (codegen.C.vtable.T v : p.vtables) {
 			outputVtable((codegen.C.vtable.Vtable) v);
+		}
+		this.sayln("");
+
+		this.sayln("// methods");
+		for (codegen.C.method.T m : p.methods) {
+			m.accept(this);
 		}
 		this.sayln("");
 

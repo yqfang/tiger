@@ -8,6 +8,9 @@ for %%i in (*.java) do java -cp ../../bin Tiger -codegen C %%i
 
 gcc -o BubbleSort BubbleSort.java.c
 gcc -o BinarySearch BinarySearch.java.c
+gcc -o BinaryTree BinaryTree.java.c
+gcc -o LinkedList LinkedList.java.c
+gcc -o TreeVisitor TreeVisitor.java.c
 
 gcc -o Factorial Factorial.java.c
 gcc -o LinearSearch LinearSearch.java.c
@@ -18,7 +21,13 @@ gcc -o QuickSort QuickSort.java.c
 @echo result-of-BinarySearch ==================================================> result.txt
 BinarySearch >> result.txt
 
+@echo result-of-BinaryTree ==================================================>> result.txt
+BinaryTree >> result.txt
+@echo result-of-TreeVisitor ==================================================>> result.txt
+TreeVisitor >> result.txt
 
+@echo result-of-LinkedList ==================================================>> result.txt
+LinkedList >> result.txt
 
 @echo result-of-Sum ==================================================>> result.txt
 Sum >> result.txt

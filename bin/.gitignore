@@ -1,3 +1,4 @@
+/ast
 /codegen
 /control
 /elaborator
@@ -5,4 +6,3 @@
 /parser
 /util
 /Tiger.class
-/ast
