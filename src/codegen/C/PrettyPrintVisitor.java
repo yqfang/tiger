@@ -373,17 +373,31 @@ public class PrettyPrintVisitor implements Visitor {
 				+ m.classId
 				+ "_"
 				+ m.id
-				+ "_frame frame;\n\t"
+				+ "_gc_frame frame;\n\t"
 				+ "frame.prev = prev;\n\tprev = &frame;\n\tframe.arguments_gc_map = "
 				+ m.classId + "_" + m.id + "_arguments_gc_map;\n\t"
-				+ "frame.arguments_base_address = &thiss;\n\t"
+				+ "frame.arguements_base_address = &thiss;\n\t"
 				+ "frame.locals_gc_map = " + m.classId + "_" + m.id
 				+ "_locals_gc_map;\n\t");
 
 		this.sayln("");
+		
+
+		for (codegen.C.dec.T d : m.locals) {
+			String strtmp = " ";
+			strtmp = ((Dec) d).getType().toString();
+			if (strtmp.equals("@int")) {
+				d.accept(this);
+				this.say("\t");
+			}
+		}
+		
+		
+		
 		this.methodName = "yes";
 		for (codegen.C.stm.T s : m.stms)
 			s.accept(this);
+		this.say("void *tmp = prev;\n\tprev = frame.prev;\n\tfree(tmp);\n\t");
 		this.say("  return ");
 		m.retExp.accept(this);
 		this.sayln(";");
@@ -401,9 +415,13 @@ public class PrettyPrintVisitor implements Visitor {
 		this.say(str);
 
 		for (codegen.C.dec.T d : m.locals) {
-			this.locals += ((Dec)d).getId() + ",";
-			d.accept(this);
-			this.say("\t");
+			String strtmp = " ";
+			strtmp = ((Dec) d).getType().toString();
+			if (!strtmp.equals("@int")) {
+				this.locals += ((Dec)d).getId() + ",";
+				d.accept(this);
+				this.say("\t");
+			}
 		}
 		this.say("};\n");
 	}
@@ -423,20 +441,16 @@ public class PrettyPrintVisitor implements Visitor {
 		}
 		this.say("char *" + m.classId + "_" + m.id + "_arguments_gc_map = \""
 				+ str + "\";\n");
-		str = "";
+		int numlocalrefs = 0;
 		for (codegen.C.dec.T d : m.locals) {
 			String strtmp = " ";
 			strtmp = ((Dec) d).getType().toString();
 			if (!strtmp.equals("@int")) {
-				str += "1";
-			} else
-				str += "0";
-		}
-		if (str.equals("")) {
-			str = "2";
+				numlocalrefs ++;
+			}
 		}
 		this.say("char *" + m.classId + "_" + m.id + "_locals_gc_map = \""
-				+ str + "\";\n");
+				+ numlocalrefs + "\";\n");
 	}
 
 	@Override

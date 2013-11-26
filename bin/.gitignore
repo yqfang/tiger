@@ -1,8 +1,8 @@
-/Tiger.class
-/ast
 /codegen
 /control
 /elaborator
 /lexer
 /parser
 /util
+/Tiger.class
+/ast
