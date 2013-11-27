@@ -4,26 +4,24 @@
 
 // The Gimple Garbage Collector.
 
-
 //===============================================================//
 // The Java Heap data structure.
 
 /*   
-      ----------------------------------------------------
-      |                        |                         |
-      ----------------------------------------------------
-      ^\                      /^
-      | \<~~~~~~~ size ~~~~~>/ |
-    from                       to
+ ----------------------------------------------------
+ |                        |                         |
+ ----------------------------------------------------
+ ^\                      /^
+ | \<~~~~~~~ size ~~~~~>/ |
+ from                       to
  */
-struct JavaHeap
-{
-  int size;         // in bytes, note that this if for semi-heap size
-  char *from;       // the "from" space pointer
-  char *fromFree;   // the next "free" space in the from space
-  char *to;         // the "to" space pointer
-  char *toStart;    // "start" address in the "to" space
-  char *toNext;     // "next" free space pointer in the to space
+struct JavaHeap {
+	int size;         // in bytes, note that this if for semi-heap size
+	char *from;       // the "from" space pointer
+	char *fromFree;   // the next "free" space in the from space
+	char *to;         // the "to" space pointer
+	char *toStart;    // "start" address in the "to" space
+	char *toNext;     // "next" free space pointer in the to space
 };
 
 // The Java heap, which is initialized by the following
@@ -33,59 +31,55 @@ struct JavaHeap heap;
 // Lab 4, exercise 10:
 // Given the heap size (in bytes), allocate a Java heap
 // in the C heap, initialize the relevant fields.
-void Tiger_heap_init (int heapSize)
-{
-  // You should write 7 statement here:
-  // #1: allocate a chunk of memory of size "heapSize" using "malloc"
+void Tiger_heap_init(int heapSize) {
+	// You should write 7 statement here:
+	// #1: allocate a chunk of memory of size "heapSize" using "malloc"
 	char *p = malloc(heapSize);
-  // #2: initialize the "size" field, note that "size" field
-  // is for semi-heap, but "heapSize" is for the whole heap.
+	// #2: initialize the "size" field, note that "size" field
+	// is for semi-heap, but "heapSize" is for the whole heap.
 	heap.size = heapSize / 2;
-  // #3: initialize the "from" field (with what value?)
+	// #3: initialize the "from" field (with what value?)
 	heap.from = p;
-  // #4: initialize the "fromFree" field (with what value?)
-	heap.fromFree = p + size;
-  // #5: initialize the "to" field (with what value?)
-	heap.to = p + size - 1;
-  // #6: initizlize the "toStart" field with NULL;
+	// #4: initialize the "fromFree" field (with what value?)
+	heap.fromFree = p;
+	// #5: initialize the "to" field (with what value?)
+	heap.to = p + heap.size;
+	// #6: initizlize the "toStart" field with NULL;
 	heap.toStart = NULL;
-  // #7: initialize the "toNext" field with NULL;
+	// #7: initialize the "toNext" field with NULL;
 	heap.toNext = NULL;
-  return;
+	return;
 }
 
 // The "prev" pointer, pointing to the top frame on the GC stack. 
 // (see part A of Lab 4)
 void *prev = 0;
 
-
-
 //===============================================================//
 // Object Model And allocation
-
 
 // Lab 4: exercise 11:
 // "new" a new object, do necessary initializations, and
 // return the pointer (reference).
 /*    ----------------
-      | vptr      ---|----> (points to the virtual method table)
-      |--------------|
-      | isObjOrArray | (0: for normal objects)
-      |--------------|
-      | length       | (this field should be empty for normal objects)
-      |--------------|
-      | forwarding   | 
-      |--------------|\
+ | vptr      ---|----> (points to the virtual method table)
+ |--------------|
+ | isObjOrArray | (0: for normal objects)
+ |--------------|
+ | length       | (this field should be empty for normal objects)
+ |--------------|
+ | forwarding   |
+ |--------------|\
 p---->| v_0          | \      
-      |--------------|  s
-      | ...          |  i
-      |--------------|  z
-      | v_{size-1}   | /e
-      ----------------/
-*/
+ |--------------|  s
+ | ...          |  i
+ |--------------|  z
+ | v_{size-1}   | /e
+ ----------------/
+ */
 // Try to allocate an object in the "from" space of the Java
 // heap. Read Tiger book chapter 13.3 for details on the
-// allocation.
+// allocation.0p
 // There are two cases to consider:
 //   1. If the "from" space has enough space to hold this object, then
 //      allocation succeeds, return the apropriate address (look at
@@ -98,31 +92,63 @@ p---->| v_0          | \
 //           an error message ("OutOfMemory") and exit.
 //           (However, a production compiler will try to expand
 //           the Java heap.)
-void *Tiger_new (void *vtable, int size)
-{
-  // Your code here:
-  
+void *Tiger_new(void *vtable, int size) {
+	// Your code here:
+	char *p;
+	if (heap.toStart == NULL) {
+		p = heap.fromFree;
+		if (size > heap.to - heap.fromFree) {
+
+			Tiger_gc();
+			heap.toStart = heap.to;
+			p = heap.toNext;
+		}
+		if (size > heap.to + heap.size - heap.toNext) {
+			printf("FROM OBJECT OutOfMemory!\n");
+			exit(1);
+		}
+	} else if (heap.toStart == heap.to) {
+		p = heap.toNext;
+		if (size > heap.to + heap.size - heap.toNext) {
+
+			Tiger_gc();
+			heap.toStart = NULL;
+			p = heap.fromFree;
+		}
+		if (size > heap.to - heap.fromFree) {
+			printf("TO OBJECT OutOfMemory!\n");
+			exit(1);
+		}
+	}
+	memset(p, 0, size);
+	((int*) p)[0] = (int) vtable;
+	((int*) p)[1] = 0;
+	((int*) p)[2] = 0;
+	((int*) p)[3] = NULL;
+	(heap.toStart == NULL) ? (heap.fromFree += size) : (heap.toNext += size);
+	return p;
+
 }
 
 // "new" an array of size "length", do necessary
-// initializations. And each array comes with an
+// initializations. And each array cosmes with an
 // extra "header" storing the array length and other information.
 /*    ----------------
-      | vptr         | (this field should be empty for an array)
-      |--------------|
-      | isObjOrArray | (1: for array)
-      |--------------|
-      | length       |
-      |--------------|
-      | forwarding   | 
-      |--------------|\
+ | vptr         | (this field should be empty for an array)
+ |--------------|
+ | isObjOrArray | (1: for array)
+ |--------------|
+ | length       |
+ |--------------|
+ | forwarding   |
+ |--------------|\
 p---->| e_0          | \      
-      |--------------|  s
-      | ...          |  i
-      |--------------|  z
-      | e_{length-1} | /e
-      ----------------/
-*/
+ |--------------|  s
+ | ...          |  i
+ |--------------|  z
+ | e_{length-1} | /e
+ ----------------/
+ */
 // Try to allocate an array object in the "from" space of the Java
 // heap. Read Tiger book chapter 13.3 for details on the
 // allocation.
@@ -138,10 +164,43 @@ p---->| e_0          | \
 //           an error message ("OutOfMemory") and exit.
 //           (However, a production compiler will try to expand
 //           the Java heap.)
-void *Tiger_new_array (int length)
-{
-  // Your code here:
-  
+void *Tiger_new_array(int length) {
+	char *p;
+	if (heap.toStart == NULL) {
+		p = heap.fromFree;
+		if (20 + sizeof(int) * length > heap.to - heap.fromFree) {
+			Tiger_gc();
+			heap.toStart = heap.to;
+			p = heap.toNext;
+		}
+		if (20 + sizeof(int) * length > heap.to + heap.size - heap.toNext) {
+			printf("FROM ARRAY OutOfMemory!\n");
+			exit(1);
+		}
+	} else if (heap.toStart == heap.to) {
+		p = heap.toNext;
+		if (20 + sizeof(int) * length > heap.to + heap.size - heap.toNext) {
+			Tiger_gc();
+			heap.toStart = NULL;
+			p = heap.fromFree;
+		}
+		if (20 + sizeof(int) * length > heap.to - heap.fromFree) {
+			printf("FROM ARRAY OutOfMemory!\n");
+			exit(1);
+		}
+	}
+
+	memset(p, 0, 20 + sizeof(int) * length);
+	((int*) p)[0] = NULL;
+	((int*) p)[1] = 1;
+	((int*) p)[2] = NULL;
+	((int*) p)[3] = length;
+	((int*) p)[4] = (heap.toStart == heap.to)?(heap.toNext+20):(heap.fromFree+20);
+
+	(heap.toStart == NULL) ?
+			(heap.fromFree += 20 + sizeof(int) * length) :
+			(heap.toNext += 20 + sizeof(int) * length);
+	return p;
 }
 
 //===============================================================//
@@ -149,9 +208,8 @@ void *Tiger_new_array (int length)
 
 // Lab 4, exercise 12:
 // A copying collector based-on Cheney's algorithm.
-static void Tiger_gc ()
-{
-  // Your code here:
-  
+static void Tiger_gc() {
+	// Your code here:
+
 }
 

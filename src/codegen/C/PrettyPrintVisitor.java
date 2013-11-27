@@ -315,8 +315,8 @@ public class PrettyPrintVisitor implements Visitor {
 		this.say("struct IntArray\n");
 		this.say("{\n");
 		this.indent();
-		this.say("int length;\n");
-		this.say("int *array;\n");
+		this.sayln("struct IntArray" + "_vtable *vptr;\n");
+		this.sayln("\t " + "\n\tint isObjOrArray;\n\tvoid *forwarding;\n\tunsigned length;\n\tint *array;\n");
 		this.unIndent();
 		this.say("} *");
 		return;
@@ -514,12 +514,19 @@ public class PrettyPrintVisitor implements Visitor {
 	}
 
 	// class
+//	struct A_class{
+//		void *vptr; // virtual method table pointer
+//		int isObjOrArray; // is this a normal object or an (integer) array object?
+//		unsigned length; // array length
+//		void *forwarding; // forwarding pointer, will be used by your Gimple GC
+//		...; // remainings are normal class or array fields
+//		};
 	@Override
 	public void visit(codegen.C.classs.Class c) {
 		this.sayln("struct " + c.id);
 		this.sayln("{");
 		this.sayln("  struct " + c.id + "_vtable *vptr;");
-
+		this.sayln("\tint isObjOrArray;\n\tunsigned length;\n\tvoid *forwarding;\n\t");
 		String str = "";
 		for (codegen.C.Tuple t : c.decs) {
 			String strtmp = t.type.toString();
@@ -558,7 +565,7 @@ public class PrettyPrintVisitor implements Visitor {
 					new java.io.OutputStreamWriter(
 							new java.io.FileOutputStream(outputName)));
 			this.writer
-					.write("#include \"include/lib.c\" \n#include \"include/gc.c\"\n");
+					.write("#include \"include/lib.c\" \n#include \"include/gc.c\"\nextern void Tiger_heap_init (int);");
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -581,19 +588,7 @@ public class PrettyPrintVisitor implements Visitor {
 
 		this.sayln("//method declar");
 		for (codegen.C.method.T m : p.methods) {
-			codegen.C.method.Method methoddeclar = (codegen.C.method.Method) m;
-			methoddeclar.retType.accept(this);
-			this.say(" " + methoddeclar.classId + "_" + methoddeclar.id + "(");
-			int size = methoddeclar.formals.size();
-			for (codegen.C.dec.T d : methoddeclar.formals) {
-				codegen.C.dec.Dec dec = (codegen.C.dec.Dec) d;
-				size--;
-				dec.type.accept(this);
-				this.say(" " + dec.id);
-				if (size > 0)
-					this.say(", ");
-			}
-			this.sayln(");");
+			printMethodDec(m);
 		}
 
 		this.sayln("// vtables");
@@ -614,7 +609,7 @@ public class PrettyPrintVisitor implements Visitor {
 
 		this.say("\n\n");
 		this.say("int main (int argc, char **argv)"
-				+ "{\nTiger_main ();\nreturn 0;}");
+				+ "{\nTiger_heap_init (1024);\n\tTiger_main ();\nreturn 0;}");
 		try {
 			this.writer.close();
 		} catch (Exception e) {
@@ -622,6 +617,22 @@ public class PrettyPrintVisitor implements Visitor {
 			System.exit(1);
 		}
 
+	}
+
+	private void printMethodDec(codegen.C.method.T m) {
+		codegen.C.method.Method methoddeclar = (codegen.C.method.Method) m;
+		methoddeclar.retType.accept(this);
+		this.say(" " + methoddeclar.classId + "_" + methoddeclar.id + "(");
+		int size = methoddeclar.formals.size();
+		for (codegen.C.dec.T d : methoddeclar.formals) {
+			codegen.C.dec.Dec dec = (codegen.C.dec.Dec) d;
+			size--;
+			dec.type.accept(this);
+			this.say(" " + dec.id);
+			if (size > 0)
+				this.say(", ");
+		}
+		this.sayln(");");
 	}
 
 }
