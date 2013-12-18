@@ -45,7 +45,7 @@ class BS{
 	boolean bs01 ;
 	int right ;
 	int left ;
-	boolean var_cont ;//48
+	boolean var_cont ;
 	int medium ;
 	int aux01 ;
 	int nt ;

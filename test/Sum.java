@@ -1,29 +1,20 @@
-class Monster
-{
-	public static void main(String[] args)
-	{
-		System.out.println(new Foo().foo());
-	}
+class Sum { 
+	public static void main(String[] a) {
+        System.out.println(new Doit().doit(101));
+    }
 }
 
-class Foo
-{
-	int i;
-	int[] num;
-    public int foo()
-    {
-    	
-    		int j;
-    		j=5;
-    		num=new int[2];
-    		num[0]=1;
-    		num[1]=2;
-            while(!(j<0))
-            {
-            	i=num[1]+num[0];
-            	i=i+j;
-            	j=j-1;
-            }
-            return i;
+class Doit {
+    public int doit(int n) {
+        int sum;
+        int i;
+        
+        i = 0;
+        sum = 0;
+        while (i<n){
+        	sum = sum + i;
+        	i = i+1;
+        }
+        return sum;
     }
 }

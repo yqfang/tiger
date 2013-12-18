@@ -15,7 +15,6 @@ public class PrettyPrintVisitor implements Visitor {
 	private String methodName = "";
 	private String locals = "";
 	private Map<String, String> TupleGCMap = new HashMap<String, String>();
-
 	public PrettyPrintVisitor() {
 		this.indentLevel = 2;
 	}
@@ -312,13 +311,19 @@ public class PrettyPrintVisitor implements Visitor {
 
 	@Override
 	public void visit(codegen.C.type.IntArray t) {
-		this.say("struct IntArray\n");
+		this.say("IntArray ");
+		
+	}
+	private void printIntArrayDef()
+	{
+		this.say("typedef struct IntArray");
+		this.say("\n");
 		this.say("{\n");
 		this.indent();
 		this.sayln("struct IntArray" + "_vtable *vptr;\n");
-		this.sayln("\t " + "\n\tint isObjOrArray;\n\tvoid *forwarding;\n\tunsigned length;\n\tint *array;\n");
+		this.sayln("\t " + "\n\tint isObjOrArray;\n\tunsigned length;\n\tvoid *forwarding;\n\tint *array;\n");
 		this.unIndent();
-		this.say("} *");
+		this.say("} * IntArray;\n\t");
 		return;
 	}
 
@@ -345,7 +350,7 @@ public class PrettyPrintVisitor implements Visitor {
 	@Override
 	public void visit(codegen.C.method.Method m) {
 
-		printGcStackFrame(m);
+		int i = printGcStackFrame(m);
 
 		printGcMap(m);
 
@@ -370,16 +375,26 @@ public class PrettyPrintVisitor implements Visitor {
 		// frame.arguments_gc_map = f_arguments_gc_map;
 		// frame.arguments_base_address = &this;
 		// frame.locals_gc_map = f_locals_gc_map;
+		String str0 = "";
+		while(i > 0)
+		{
+			str0 += "0,";
+			--i;
+		}
 		this.say("\tstruct "
 				+ m.classId
 				+ "_"
 				+ m.id
-				+ "_gc_frame frame;\n\t"
+				+ "_gc_frame frame = {0,0,0,0," + str0) ;
+				
+				
+				this.say("};\n\t"
 				+ "frame.prev = prev;\n\tprev = &frame;\n\tframe.arguments_gc_map = "
 				+ m.classId + "_" + m.id + "_arguments_gc_map;\n\t"
 				+ "frame.arguements_base_address = &thiss;\n\t"
 				+ "frame.locals_gc_map = " + m.classId + "_" + m.id
 				+ "_locals_gc_map;\n\t");
+
 
 		this.sayln("");
 
@@ -391,10 +406,13 @@ public class PrettyPrintVisitor implements Visitor {
 				this.say("\t");
 			}
 		}
-
 		this.methodName = "yes";
 		for (codegen.C.stm.T s : m.stms)
-			s.accept(this);
+		{
+			s.accept(this);	
+			//this.sayln("printCurrentHeap();\n\t");
+		}
+			
 		this.say("prev = frame.prev;");
 		this.say("  return ");
 		m.retExp.accept(this);
@@ -405,7 +423,8 @@ public class PrettyPrintVisitor implements Visitor {
 		return;
 	}
 
-	private void printGcStackFrame(codegen.C.method.Method m) {
+	private int printGcStackFrame(codegen.C.method.Method m) {
+		int i = 0;
 		String str = "struct " + m.classId + "_" + m.id
 				+ "_gc_frame{\n\tvoid* prev;\n\tchar *"
 				+ "arguments_gc_map;\n\tint *arguements_base_address;\n\t"
@@ -416,12 +435,14 @@ public class PrettyPrintVisitor implements Visitor {
 			String strtmp = " ";
 			strtmp = ((Dec) d).getType().toString();
 			if (!strtmp.equals("@int")) {
+				i++;
 				this.locals += ((Dec) d).getId() + ",";
 				d.accept(this);
 				this.say("\t");
 			}
 		}
 		this.say("};\n");
+		return i;
 	}
 
 	private void printGcMap(codegen.C.method.Method m) {
@@ -575,7 +596,7 @@ public class PrettyPrintVisitor implements Visitor {
 		this.sayln("// Do NOT modify!\n");
 
 		this.sayln("// structures");
-		this.say("void *prev;\n");
+		printIntArrayDef();
 		for (codegen.C.classs.T c : p.classes) {
 			c.accept(this);
 		}
@@ -609,7 +630,7 @@ public class PrettyPrintVisitor implements Visitor {
 
 		this.say("\n\n");
 		this.say("int main (int argc, char **argv)"
-				+ "{\nTiger_heap_init (1024);\n\tTiger_main ();\nreturn 0;}");
+				+ "{\nTiger_heap_init (HEAPSIZE);\n\tTiger_main ();\nreturn 0;}");
 		try {
 			this.writer.close();
 		} catch (Exception e) {
