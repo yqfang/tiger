@@ -10,8 +10,20 @@ public interface Visitor
   public void visit(Areturn s);
 
   public void visit(Astore s);
+  
+  public void visit(Iaload s);
+  
+  public void visit(Arraylength s);
+  
+  public void visit(Iastore s);
 
   public void visit(Goto s);
+  
+  public void visit(Getfield s);
+  
+  public void visit(Iadd s);
+  
+  public void visit(Iand s);
 
   public void visit(Ificmplt s);
 
@@ -34,8 +46,12 @@ public interface Visitor
   public void visit(Ldc s);
 
   public void visit(Print s);
+  
+  public void visit(Putfield s);
 
   public void visit(New s);
+  
+  public void visit(Newarray s);
 
   // type
   public void visit(codegen.bytecode.type.Class t);

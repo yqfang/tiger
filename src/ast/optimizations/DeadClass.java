@@ -1,5 +1,7 @@
 package ast.optimizations;
 
+import ast.exp.Parent;
+
 // Dead class elimination optimizations on an AST.
 
 public class DeadClass implements ast.Visitor
@@ -8,7 +10,11 @@ public class DeadClass implements ast.Visitor
   private java.util.LinkedList<String> worklist;
   private ast.classs.T newClass;
   public ast.program.T program;
-
+@Override
+    public void visit(Parent e) {
+        // TODO Auto-generated method stub
+        
+    }
   public DeadClass()
   {
     this.set = new java.util.HashSet<String>();

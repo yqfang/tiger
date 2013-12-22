@@ -44,16 +44,29 @@ public class PrettyPrintVisitor implements Visitor
     // Lab2, exercise4: filling in missing code.
     // Similar for other methods with empty bodies.
     // Your code here:
+	  e.left.accept(this);
+	    this.say(" + ");
+	    e.right.accept(this);
+	    return;
   }
 
   @Override
   public void visit(ast.exp.And e)
   {
+	  e.left.accept(this);
+	    this.say(" && ");
+	    e.right.accept(this);
+	    return;
   }
 
   @Override
   public void visit(ast.exp.ArraySelect e)
   {
+	  e.array.accept(this);;
+	    this.say(" [");
+	    e.index.accept(this);
+	    this.say("] ");
+	    return;
   }
 
   @Override
@@ -61,10 +74,15 @@ public class PrettyPrintVisitor implements Visitor
   {
     e.exp.accept(this);
     this.say("." + e.id + "(");
+    //System.out.println(e.args.size());
     for (ast.exp.T x : e.args) {
       x.accept(this);
+      if(x.equals(e.args.getLast()))
+    	  break;
       this.say(", ");
     }
+ 
+
     this.say(")");
     return;
   }
@@ -72,17 +90,22 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.exp.False e)
   {
+	 this.say("false");
   }
 
   @Override
   public void visit(ast.exp.Id e)
   {
+	 
     this.say(e.id);
   }
 
   @Override
   public void visit(ast.exp.Length e)
   {
+	  e.array.accept(this);
+	  this.say("."+"length");
+	  return;
   }
 
   @Override
@@ -97,6 +120,10 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.exp.NewIntArray e)
   {
+	  this.say("new "+"int"+"[");
+	  e.exp.accept(this);
+	  this.say("]");
+	  return;
   }
 
   @Override
@@ -109,6 +136,8 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.exp.Not e)
   {
+	  this.say("!");
+	  e.exp.accept(this);
   }
 
   @Override
@@ -145,6 +174,7 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.exp.True e)
   {
+	  this.say("ture");
   }
 
   // statements
@@ -154,18 +184,34 @@ public class PrettyPrintVisitor implements Visitor
     this.printSpaces();
     this.say(s.id + " = ");
     s.exp.accept(this);
-    this.say(";");
+    this.say(";\n");
     return;
   }
 
   @Override
   public void visit(ast.stm.AssignArray s)
   {
+	  this.printSpaces();
+	  this.say(s.id+"[");
+	  s.index.accept(this);
+	  this.say("]"+"=");
+	  s.exp.accept(this);
+	  this.say(";\n");
+	  return;
   }
 
   @Override
   public void visit(ast.stm.Block s)
   {
+	  this.printSpaces();
+	  this.say("{");
+	  this.say("\n");
+	  for(ast.stm.T x:s.stms){
+		  x.accept(this);
+	  }
+	  this.printSpaces();
+	  this.sayln("}");
+	  return;
   }
 
   @Override
@@ -201,17 +247,32 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.stm.While s)
   {
+	  this.printSpaces();
+	    this.say("while (");
+	    s.condition.accept(this);
+	    this.sayln(")");
+	    this.indent();
+	    s.body.accept(this);
+	    this.unIndent();
+	    this.sayln("");
+	    this.printSpaces();
+
+	    return;
+	    
+	   
   }
 
   // type
   @Override
   public void visit(ast.type.Boolean t)
   {
+	  this.say("boolean");
   }
 
   @Override
   public void visit(ast.type.Class t)
   {
+	  this.say(t.id);
   }
 
   @Override
@@ -223,12 +284,15 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(ast.type.IntArray t)
   {
+	  this.say("int "+"["+"]");
   }
 
   // dec
   @Override
   public void visit(ast.dec.Dec d)
   {
+	  d.type.accept(this);
+	  this.say(" "+d.id+";\n");
   }
 
   // method
@@ -241,8 +305,16 @@ public class PrettyPrintVisitor implements Visitor
     for (ast.dec.T d : m.formals) {
       ast.dec.Dec dec = (ast.dec.Dec) d;
       dec.type.accept(this);
+      if(d.equals(m.formals.getLast()))
+      {
+    	  this.say(" " + dec.id);
+    	  break;
+      }
+    	 
       this.say(" " + dec.id + ", ");
     }
+    
+
     this.sayln(")");
     this.sayln("  {");
 
@@ -311,5 +383,13 @@ public class PrettyPrintVisitor implements Visitor
       classs.accept(this);
     }
     System.out.println("\n\n");
+  }
+
+  @Override
+  public void visit(ast.exp.Parent e) 
+  {
+	this.say("(");
+	e.exp.accept(this);
+	this.say(")");
   }
 }

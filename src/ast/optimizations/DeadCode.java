@@ -1,5 +1,7 @@
 package ast.optimizations;
 
+import ast.exp.Parent;
+
 // Dead code elimination optimizations on an AST.
 
 public class DeadCode implements ast.Visitor
@@ -7,7 +9,11 @@ public class DeadCode implements ast.Visitor
   private ast.classs.T newClass;
   private ast.mainClass.T mainClass;
   public ast.program.T program;
-  
+  @Override
+    public void visit(Parent e) {
+        // TODO Auto-generated method stub
+        
+    }
   public DeadCode()
   {
     this.newClass = null;

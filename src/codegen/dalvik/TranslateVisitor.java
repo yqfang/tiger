@@ -2,6 +2,7 @@ package codegen.dalvik;
 
 import java.util.LinkedList;
 
+import ast.exp.Parent;
 import util.Label;
 import util.Temp;
 
@@ -9,6 +10,11 @@ import util.Temp;
 
 public class TranslateVisitor implements ast.Visitor
 {
+    @Override
+        public void visit(Parent e) {
+            // TODO Auto-generated method stub
+            
+        }
   private String classId;
   private codegen.dalvik.type.T type; // type after translation
   private codegen.dalvik.dec.T dec;

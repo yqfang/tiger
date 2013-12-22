@@ -114,7 +114,7 @@ class List{
 	boolean ret_val ;
 	boolean aux05;
 	List aux01 ;
-	List prev ;
+	List prev1 ;
 	boolean var_end ;
 	Element var_elem ;
 	int aux04 ;
@@ -125,7 +125,7 @@ class List{
 	ret_val = false ;
 	aux04 = 0 - 1 ;
 	aux01 = this ;
-	prev = this ;
+	prev1 = this ;
 	var_end = end;
 	var_elem = elem ;
 	while ((!var_end) && (!ret_val)){
@@ -137,13 +137,13 @@ class List{
 		} 
 		else{ // delete a non first element
 		    System.out.println(0-555);
-		    aux05 = prev.SetNext(aux01.GetNext());
+		    aux05 = prev1.SetNext(aux01.GetNext());
 		    System.out.println(0-555);
 		    
 		}
 	    } else nt = 0 ;
 	    if (!ret_val){
-		prev = aux01 ;
+		prev1 = aux01 ;
 		aux01 = aux01.GetNext() ;
 		var_end = aux01.GetEnd();
 		var_elem = aux01.GetElem();

@@ -10,7 +10,11 @@ public class Control
   public static boolean testFac = false;
 
   // lexer and parser
+
   public static boolean lex = false;
+
+
+
 
   // ast
   public static boolean dumpAst = false;
@@ -25,7 +29,6 @@ public class Control
   public static Visualize_Kind_t visualize = Visualize_Kind_t.None;
 
 
-  
   // elaborator
   public static boolean elabClassTable = false;
   public static boolean elabMethodTable = false;

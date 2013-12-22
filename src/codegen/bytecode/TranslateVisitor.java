@@ -3,12 +3,20 @@ package codegen.bytecode;
 import java.util.Hashtable;
 import java.util.LinkedList;
 
+import ast.exp.Parent;
 import util.Label;
 
 // Given a Java ast, translate it into Java bytecode.
 
 public class TranslateVisitor implements ast.Visitor
 {
+	@Override
+		public void visit(Parent e)
+		{
+			// TODO Auto-generated method stub
+			e.exp.accept(this);
+			return;
+		}
   private String classId;
   private int index;
   private Hashtable<String, Integer> indexTable;
@@ -43,16 +51,28 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.exp.Add e)
   {
+	  e.left.accept(this);
+	  e.right.accept(this);
+	  emit(new codegen.bytecode.stm.Iadd());
+	  return;
   }
 
   @Override
   public void visit(ast.exp.And e)
   {
+	  e.left.accept(this);
+	  e.right.accept(this);
+	  emit(new codegen.bytecode.stm.Iand());
+	  return;
   }
 
   @Override
   public void visit(ast.exp.ArraySelect e)
   {
+	  e.array.accept(this);
+	  e.index.accept(this);
+	  emit(new codegen.bytecode.stm.Iaload());
+	  return;
   }
 
   @Override
@@ -76,24 +96,39 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.exp.False e)
   {
+	  emit(new codegen.bytecode.stm.Ldc(0));
+	  return;
   }
 
   @Override
   public void visit(ast.exp.Id e)
   {
-    int index = this.indexTable.get(e.id);
-    ast.type.T type = e.type;
-    if (type.getNum() > 0)// a reference
-      emit(new codegen.bytecode.stm.Aload(index));
-    else
-      emit(new codegen.bytecode.stm.Iload(index));
+	  if(this.indexTable.get(e.id)!=null)
+	  {
+		  int index = this.indexTable.get(e.id);
+		  ast.type.T type = e.type;
+		  if (type.getNum() > 0)// a reference
+			  emit(new codegen.bytecode.stm.Aload(index));
+		  else
+			  emit(new codegen.bytecode.stm.Iload(index));
+	  }
     // but what about this is a field?
+	  else
+	  {
+		  e.type.accept(this);
+		  codegen.bytecode.type.T newtype=this.type;
+		  emit(new codegen.bytecode.stm.Aload(0));
+		  emit(new codegen.bytecode.stm.Getfield(classId, e.id,newtype));
+	  }
     return;
   }
 
   @Override
   public void visit(ast.exp.Length e)
   {
+	  e.array.accept(this);
+	  emit(new codegen.bytecode.stm.Arraylength());
+	  return;
   }
 
   @Override
@@ -116,6 +151,9 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.exp.NewIntArray e)
   {
+	  e.exp.accept(this);
+	  emit(new codegen.bytecode.stm.Newarray());
+	  return;
   }
 
   @Override
@@ -128,6 +166,17 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.exp.Not e)
   {
+	  Label t1=new Label(), f1=new Label(),e1=new Label();
+	  e.exp.accept(this);
+	  emit(new codegen.bytecode.stm.Ifne(t1));
+	  emit(new codegen.bytecode.stm.Label(f1));
+	  emit(new codegen.bytecode.stm.Ldc(1));
+	  emit(new codegen.bytecode.stm.Goto(e1));
+	  emit(new codegen.bytecode.stm.Label(t1));
+	  emit(new codegen.bytecode.stm.Ldc(0));
+	  emit(new codegen.bytecode.stm.Goto(e1));
+	  emit(new codegen.bytecode.stm.Label(e1));
+	  return;
   }
 
   @Override
@@ -165,19 +214,32 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.exp.True e)
   {
+	  emit(new codegen.bytecode.stm.Ldc(1));
+	  return;
   }
 
   // statements
   @Override
   public void visit(ast.stm.Assign s)
   {
-    s.exp.accept(this);
-    int index = this.indexTable.get(s.id);
-    ast.type.T type = s.type;
-    if (type.getNum() > 0)
-      emit(new codegen.bytecode.stm.Astore(index));
+    if(this.indexTable.get(s.id)!=null)
+    {
+    	s.exp.accept(this);
+    	int index = this.indexTable.get(s.id);
+    	ast.type.T type = s.type;
+    	if (type.getNum() > 0)
+    		emit(new codegen.bytecode.stm.Astore(index));
+    	else
+    		emit(new codegen.bytecode.stm.Istore(index));
+    }
     else
-      emit(new codegen.bytecode.stm.Istore(index));
+    {
+    	emit(new codegen.bytecode.stm.Aload(0));
+    	s.exp.accept(this);
+    	s.type.accept(this);
+    	codegen.bytecode.type.T newtype=this.type;
+    	emit(new codegen.bytecode.stm.Putfield(classId, s.id,newtype));
+    }
 
     return;
   }
@@ -185,11 +247,31 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.stm.AssignArray s)
   {
+	  if(this.indexTable.get(s.id)!=null)
+	  {
+		  int index=this.indexTable.get(s.id);
+		  emit(new codegen.bytecode.stm.Aload(index));
+		  s.index.accept(this);
+		  s.exp.accept(this);
+		  emit(new codegen.bytecode.stm.Iastore());
+	  }
+	  else
+	  {
+		  emit(new codegen.bytecode.stm.Aload(0));
+		  emit(new codegen.bytecode.stm.Getfield(classId, s.id,new codegen.bytecode.type.IntArray()));
+		  s.index.accept(this);
+		  s.exp.accept(this);
+		  emit(new codegen.bytecode.stm.Iastore());
+	  }
+	  return;
   }
 
   @Override
   public void visit(ast.stm.Block s)
   {
+	  for(ast.stm.T stm1:s.stms)
+		  stm1.accept(this);
+	  return;
   }
 
   @Override
@@ -219,17 +301,29 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.stm.While s)
   {
+	  Label t1=new Label(),f1=new Label(),e1=new Label();
+	  emit(new codegen.bytecode.stm.Label(t1));
+	  s.condition.accept(this);
+	  emit(new codegen.bytecode.stm.Ifne(f1));
+	  emit(new codegen.bytecode.stm.Goto(e1));
+	  emit(new codegen.bytecode.stm.Label(f1));
+	  s.body.accept(this);
+	  emit(new codegen.bytecode.stm.Goto(t1));
+	  emit(new codegen.bytecode.stm.Label(e1));
+	  return;
   }
 
   // type
   @Override
   public void visit(ast.type.Boolean t)
   {
+	  this.type=new codegen.bytecode.type.Int();
   }
 
   @Override
   public void visit(ast.type.Class t)
   {
+	  this.type=new codegen.bytecode.type.Class(t.id);
   }
 
   @Override
@@ -241,6 +335,7 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.type.IntArray t)
   {
+	  this.type=new codegen.bytecode.type.IntArray();
   }
 
   // dec
@@ -297,6 +392,8 @@ public class TranslateVisitor implements ast.Visitor
   @Override
   public void visit(ast.classs.Class c)
   {
+	  this.index=1;
+	  this.indexTable = new java.util.Hashtable<String, Integer>();
     this.classId = c.id;
     java.util.LinkedList<codegen.bytecode.dec.T> newDecs = new java.util.LinkedList<codegen.bytecode.dec.T>();
     for (ast.dec.T dec : c.decs) {

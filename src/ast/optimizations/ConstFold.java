@@ -1,5 +1,7 @@
 package ast.optimizations;
 
+import ast.exp.Parent;
+
 // Constant folding optimizations on an AST.
 
 public class ConstFold implements ast.Visitor
@@ -14,7 +16,11 @@ public class ConstFold implements ast.Visitor
     this.mainClass = null;
     this.program = null;
   }
-
+@Override
+    public void visit(Parent e) {
+        // TODO Auto-generated method stub
+        
+    }
   // //////////////////////////////////////////////////////
   // 
   public String genId()
