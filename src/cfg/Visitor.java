@@ -13,6 +13,8 @@ public interface Visitor
   public void visit(cfg.type.Int t);
 
   public void visit(cfg.type.IntArray t);
+  
+  public void visit(cfg.type.IntStar t);
 
   // dec
   public void visit(cfg.dec.Dec d);
@@ -34,6 +36,8 @@ public interface Visitor
   public void visit(cfg.stm.Move m);
   
   public void visit(cfg.stm.NewObject m);
+  
+  public void visit(cfg.stm.NewIntArray m);
   
   public void visit(cfg.stm.Print m);
 

@@ -1,5 +1,7 @@
 package cfg;
 
+import cfg.type.IntStar;
+
 public class VisualVisitor implements Visitor
 {
   public StringBuffer strb;
@@ -82,6 +84,15 @@ public class VisualVisitor implements Visitor
         + "_vtable_, sizeof(struct " + s.c + "))));");
     return;
   }
+  
+  @Override
+  public void visit(cfg.stm.NewIntArray s)
+  {
+	  emit(s.dst+" = (struct IntArray*)(Tiger_new_array(");
+	  s.exp.accept(this);
+	  emit("));");
+	  return;
+  }
 
   @Override
   public void visit(cfg.stm.Print s)
@@ -151,11 +162,13 @@ public class VisualVisitor implements Visitor
   @Override
   public void visit(cfg.type.Int t)
   {
+	  emit("int");
   }
 
   @Override
   public void visit(cfg.type.IntArray t)
   {
+	  emit("IntArray");
   }
 
   // dec
@@ -272,5 +285,11 @@ public class VisualVisitor implements Visitor
     }    
     p.mainMethod.accept(this);
   }
+
+@Override
+public void visit(IntStar t) {
+	// TODO Auto-generated method stub
+	emit("int *");
+}
 
 }

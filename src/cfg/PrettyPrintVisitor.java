@@ -1,5 +1,6 @@
 package cfg;
 
+import cfg.type.IntStar;
 import control.Control;
 
 public class PrettyPrintVisitor implements Visitor
@@ -103,6 +104,16 @@ public class PrettyPrintVisitor implements Visitor
         + "_vtable_, sizeof(struct " + s.c + "))));");
     return;
   }
+  
+  @Override
+  public void visit(cfg.stm.NewIntArray s)
+  {
+	  this.printSpaces();
+	  this.say(s.dst+" = (struct IntArray*)(Tiger_new_array(");
+	  s.exp.accept(this);
+	  this.say("));");
+	  return;
+  }
 
   @Override
   public void visit(cfg.stm.Print s)
@@ -189,6 +200,7 @@ public class PrettyPrintVisitor implements Visitor
   @Override
   public void visit(cfg.type.IntArray t)
   {
+	  this.say("IntArray");
   }
 
   // dec
@@ -327,6 +339,8 @@ public class PrettyPrintVisitor implements Visitor
 
       this.writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(
           new java.io.FileOutputStream(outputName)));
+      this.writer
+		.write("#include \"include/lib.c\" \n#include \"include/gc.c\"\nextern void Tiger_heap_init (int);");
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
@@ -337,6 +351,7 @@ public class PrettyPrintVisitor implements Visitor
     this.sayln("// Control-flow Graph\n");
 
     this.sayln("// structures");
+    printIntArrayDef();
     for (cfg.classs.T c : p.classes) {
       c.accept(this);
     }
@@ -346,24 +361,35 @@ public class PrettyPrintVisitor implements Visitor
       v.accept(this);
     }
     this.sayln("");
+    
+    this.sayln("//method declar");
+	for (cfg.method.T m : p.methods) {
+		printMethodDec(m);
+	}
 
+	this.sayln("// vtables");
+    
+    for (cfg.vtable.T v : p.vtables) {
+      outputVtable((cfg.vtable.Vtable) v);
+    }
+    this.sayln("");
+    
     this.sayln("// methods");
     for (cfg.method.T m : p.methods) {
       m.accept(this);
     }
     this.sayln("");
 
-    this.sayln("// vtables");
-    for (cfg.vtable.T v : p.vtables) {
-      outputVtable((cfg.vtable.Vtable) v);
-    }
-    this.sayln("");
+    
 
     this.sayln("// main method");
     p.mainMethod.accept(this);
     this.sayln("");
 
     this.say("\n\n");
+    this.say("\n\n");
+	this.say("int main (int argc, char **argv)"
+			+ "{\nTiger_heap_init (HEAPSIZE);\n\tTiger_main ();\nreturn 0;}");
 
     try {
       this.writer.close();
@@ -373,5 +399,39 @@ public class PrettyPrintVisitor implements Visitor
     }
 
   }
+  private void printMethodDec(cfg.method.T m) 
+  {
+  		cfg.method.Method methoddeclar = (cfg.method.Method) m;
+  		methoddeclar.retType.accept(this);
+  		this.say(" " + methoddeclar.classId + "_" + methoddeclar.id + "(");
+  		int size = methoddeclar.formals.size();
+  		for (cfg.dec.T d : methoddeclar.formals) {
+  			cfg.dec.Dec dec = (cfg.dec.Dec) d;
+  			size--;
+  			dec.type.accept(this);
+  			this.say(" " + dec.id);
+  			if (size > 0)
+  				this.say(", ");
+  		}
+  		this.sayln(");");
+  	}
+  private void printIntArrayDef()
+	{
+		this.say("typedef struct IntArray");
+		this.say("\n");
+		this.say("{\n");
+		
+		this.sayln("struct IntArray" + "_vtable *vptr;\n");
+		this.sayln("\t " + "\n\tint isObjOrArray;\n\tunsigned length;\n\tvoid *forwarding;\n\tint *array;\n");
+		
+		this.say("} * IntArray;\n\t");
+		return;
+	}
+
+@Override
+public void visit(IntStar t) {
+	// TODO Auto-generated method stub
+	this.say("int *");
+}
 
 }

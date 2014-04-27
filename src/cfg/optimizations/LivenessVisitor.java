@@ -1,5 +1,12 @@
 package cfg.optimizations;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+
+import cfg.stm.NewIntArray;
+import cfg.type.IntStar;
+
 public class LivenessVisitor implements cfg.Visitor
 {
   // gen, kill for one statement
@@ -33,6 +40,9 @@ public class LivenessVisitor implements cfg.Visitor
   // liveIn, liveOut for transfer
   public java.util.HashMap<cfg.transfer.T, java.util.HashSet<String>> transferLiveIn;
   public java.util.HashMap<cfg.transfer.T, java.util.HashSet<String>> transferLiveOut;
+  
+  //blocks of nowmethod
+  public LinkedList<cfg.block.T>blocksList=new LinkedList<>();
 
   // As you will walk the tree for many times, so
   // it will be useful to recored which is which:
@@ -258,6 +268,7 @@ public class LivenessVisitor implements cfg.Visitor
         for (String str : this.oneStmKill) {
           System.out.print(str + ", ");
         }
+        System.out.println();
       }
     }
     this.oneTransferGen = new java.util.HashSet<>();
@@ -272,14 +283,201 @@ public class LivenessVisitor implements cfg.Visitor
       for (String str : this.oneTransferGen) {
         System.out.print(str + ", ");
       }
-      System.out.println("\nkill is:");
+      System.out.print("\nkill is:");
       for (String str : this.oneTransferKill) {
         System.out.print(str + ", ");
       }
+      System.out.println();
     }
     return;
   }
-
+  
+  private void calculateBlockGenKill(cfg.block.Block b)
+  {
+	  this.oneTransferGen = new java.util.HashSet<>();
+	  this.oneTransferKill = new java.util.HashSet<>();
+	  HashSet<String>NowBlockGen=new HashSet<>();
+	  HashSet<String>NowBlockKill=new HashSet<>();
+	  cfg.transfer.T transferNowBlock=b.transfer;
+	  transferNowBlock.accept(this);
+	  NowBlockKill.addAll(this.oneTransferKill);
+	  NowBlockGen.addAll(this.oneTransferGen);
+	  LinkedList<cfg.stm.T> tempstorestms=new LinkedList<>();
+	  for(cfg.stm.T stm:b.stms)
+	  {
+		  tempstorestms.addFirst(stm);
+	  }
+	  HashSet<String> afteruse=NowBlockGen;
+	  HashSet<String> middleuse=new HashSet<>();
+	  for(cfg.stm.T stmoftemp:tempstorestms)
+	  {
+		  this.oneStmGen=new HashSet<>();
+		  this.oneStmKill=new HashSet<>();
+		  stmoftemp.accept(this);
+		  NowBlockKill.addAll(this.oneStmKill);
+		  HashSet<String> beforeuse=new HashSet<>();
+		  for(String def:this.oneStmKill)
+		  {
+			  for(String after:afteruse)
+			  {
+				  if(after.equals(def))
+					  ;
+					  
+				  else
+					  middleuse.add(after);
+			  }
+		  }
+		 beforeuse.addAll(middleuse);
+		 beforeuse.addAll(this.oneStmGen);
+		 afteruse=beforeuse;
+	  }
+	  NowBlockGen=afteruse;
+	  this.blockGen.put(b, NowBlockGen);
+	  this.blockKill.put(b, NowBlockKill);
+	  if (control.Control.isTracing("liveness.step2")) {
+	      System.out.print("\ngen, kill for block:");
+	      System.out.print(b.label.toString());
+	      b.toString();
+	      System.out.print("\ngen is:");
+	      for (String str : NowBlockGen) {
+	        System.out.print(str + ", ");
+	      }
+	      System.out.print("\nkill is:");
+	      for (String str : NowBlockKill) {
+	        System.out.print(str + ", ");
+	      }
+	      System.out.println();
+	    }
+  }
+  
+  private void calculateBlockInOut(cfg.block.Block b)
+  {
+	  HashSet<String>NowBlockIn=new HashSet<>();
+	  HashSet<String>NowBlockOut=new HashSet<>();
+	  cfg.transfer.T transferNow=b.transfer;
+	  if(transferNow.getClass().getName().equals("cfg.transfer.Goto"))
+	  {
+		  cfg.transfer.Goto dsgoto=(cfg.transfer.Goto)transferNow;
+		  for(cfg.block.T block:this.blocksList)
+		  {
+			  cfg.block.Block block2=(cfg.block.Block)block;
+			  if(block2.label.equals(dsgoto.label)&&block2.count==0)
+			  {
+				  HashSet<String>beforeNowBlockOut=NowBlockOut;
+				  block2.count=block2.count+1;
+				  calculateBlockInOut(block2);
+				  
+				  int count=0;
+				  NowBlockOut.addAll(this.blockLiveIn.get(block));
+//				  for(String idBefor:beforeNowBlockOut)
+//					  for(String idAfter:NowBlockOut)
+//						  if(!idBefor.equals(idAfter))
+//							  ++count;
+//				  if(count!=0)
+//					  break;
+			  }
+		  }
+	  }
+	  else if(transferNow.getClass().getName().equals("cfg.transfer.If"))
+	  {
+		  cfg.transfer.If dsIf=(cfg.transfer.If)transferNow;
+		  for(cfg.block.T block:this.blocksList)
+		  {
+			  cfg.block.Block block2=(cfg.block.Block)block;
+			  if((block2.label.equals(dsIf.truee)||block2.label.equals(dsIf.falsee))&&block2.count==0)
+			  {
+				  HashSet<String>beforeNowBlockOut=NowBlockOut;
+				  block2.count=block2.count+1;
+				  calculateBlockInOut(block2);
+				  
+				  int count=0;
+				  NowBlockOut.addAll(this.blockLiveIn.get(block));
+//				  for(String idBefor:beforeNowBlockOut)
+//					  for(String idAfter:NowBlockOut)
+//						  if(!idBefor.equals(idAfter))
+//							  ++count;
+//				  if(count!=0)
+//					  break;
+			  }
+		  }
+	  }
+	  else
+		  ;
+	  this.blockLiveOut.put(b, NowBlockOut);
+	  HashSet<String> tempBlockOut=NowBlockOut;
+	  HashSet<String> middleBlock=new HashSet<>();
+	  for(String def:this.blockKill.get(b))
+		  for(String out:tempBlockOut)
+		  {
+			  if(out.equals(def))
+				  ;
+			  else
+				  middleBlock.add(out);
+		  }
+	  NowBlockIn.addAll(middleBlock);
+	  NowBlockIn.addAll(this.blockGen.get(b));
+	  this.blockLiveIn.put(b, NowBlockIn);
+	  if (control.Control.isTracing("liveness.step3")) {
+	      System.out.print("\nLiveIn, LiveOut for block:");
+	      System.out.print(b.label.toString());
+	      b.toString();
+	      System.out.print("\nLiveIn is:");
+	      for (String str : NowBlockIn) {
+	        System.out.print(str + ", ");
+	      }
+	      System.out.print("\nLiveOut is:");
+	      for (String str : NowBlockOut) {
+	        System.out.print(str + ", ");
+	      }
+	      System.out.println();
+	    }
+	  return;
+  }
+  
+  public void calculateStmInOut(cfg.block.Block b)
+  {
+	  HashSet<String> BlockOut=this.blockLiveOut.get(b);
+	  HashSet<String> stmOut=new HashSet<>();
+	  stmOut=BlockOut;
+	  LinkedList<cfg.stm.T> forreavser=new LinkedList<>();
+	  for(cfg.stm.T stm:b.stms)
+	  {
+		  forreavser.addFirst(stm);
+	  }
+	  for(cfg.stm.T stm:forreavser)
+	  {
+		 HashSet<String> def=this.stmKill.get(stm);
+		 HashSet<String> use=this.stmGen.get(stm);
+		 HashSet<String> stmIn=new HashSet<>();
+		 HashSet<String> middleStore=new HashSet<>();
+		 for(String strdef:def)
+			 for(String strOut:stmOut)
+			 {
+				 if(strOut.equals(strdef))
+					 ;
+				 else
+					 middleStore.add(strOut);
+			 }
+		 stmIn.addAll(middleStore);
+		 stmIn.addAll(use);
+		 this.stmLiveIn.put(stm, stmIn);
+		 this.stmLiveOut.put(stm, stmOut);
+		 stmOut=stmIn;
+		 if (control.Control.isTracing("liveness.step4")) {
+		      System.out.print("\nLiveIn and LiveOut of stm:");
+		      stm.toString();
+		      System.out.print("\nLiveIn is:");
+		      for (String str : stmIn) {
+		        System.out.print(str + ", ");
+		      }
+		      System.out.print("\nLiveOut is:");
+		      for (String str : stmOut) {
+		        System.out.print(str + ", ");
+		      }
+		      System.out.println();
+		 }
+	  }
+  }
   // block
   @Override
   public void visit(cfg.block.Block b)
@@ -288,6 +486,13 @@ public class LivenessVisitor implements cfg.Visitor
     case StmGenKill:
       calculateStmTransferGenKill(b);
       break;
+    case BlockGenKill:
+    	calculateBlockGenKill(b);
+    	break;
+    case BlockInOut:
+    	calculateBlockInOut(b);
+    case StmInOut:
+    	calculateStmInOut(b);
     default:
       // Your code here:
       return;
@@ -310,6 +515,11 @@ public class LivenessVisitor implements cfg.Visitor
     // For this, you should visit statements and transfers in a
     // block in a reverse order.
     // Your code here:
+    this.kind = Liveness_Kind_t.BlockGenKill;
+    for(cfg.block.T block :m.blocks)
+    {
+    	block.accept(this);
+    }
 
     // Step 3: calculate the "liveIn" and "liveOut" sets for each block
     // Note that to speed up the calculation, you should first
@@ -317,10 +527,18 @@ public class LivenessVisitor implements cfg.Visitor
     // crawl through the blocks in that order.
     // And also you should loop until a fix-point is reached.
     // Your code here:
+    this.kind=Liveness_Kind_t.BlockInOut;
+    this.blocksList=m.blocks;
+    cfg.block.T block=m.blocks.getFirst();
+    block.accept(this);
+    
 
     // Step 4: calculate the "liveIn" and "liveOut" sets for each
     // statement and transfer
     // Your code here:
+    this.kind=Liveness_Kind_t.StmInOut;
+    for(cfg.block.T block1:m.blocks)
+    	block1.accept(this);
 
   }
 
@@ -339,6 +557,11 @@ public class LivenessVisitor implements cfg.Visitor
     // For this, you should visit statements and transfers in a
     // block in a reverse order.
     // Your code here:
+    this.kind=Liveness_Kind_t.BlockGenKill;
+    for(cfg.block.T block:m.blocks)
+    {
+    	block.accept(this);
+    }
 
     // Step 3: calculate the "liveIn" and "liveOut" sets for each block
     // Note that to speed up the calculation, you should first
@@ -346,6 +569,12 @@ public class LivenessVisitor implements cfg.Visitor
     // crawl through the blocks in that order.
     // And also you should loop until a fix-point is reached.
     // Your code here:
+    this.kind=Liveness_Kind_t.BlockInOut;
+    this.blocksList=m.blocks;
+    for(cfg.block.T block:m.blocks)
+    {
+    	block.accept(this);
+    }
 
     // Step 4: calculate the "liveIn" and "liveOut" sets for each
     // statement and transfer
@@ -374,5 +603,19 @@ public class LivenessVisitor implements cfg.Visitor
     }
     return;
   }
+
+@Override
+public void visit(NewIntArray m) {
+	// TODO Auto-generated method stub
+	this.oneStmKill.add(m.dst);
+	m.exp.accept(this);
+
+}
+
+@Override
+public void visit(IntStar t) {
+	// TODO Auto-generated method stub
+	
+}
 
 }

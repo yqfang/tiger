@@ -6,6 +6,8 @@ public class Main
   
   public void accept(ast.program.T ast)
   {
+	int count=5;
+	while(count>0){
     DeadClass dceVisitor = new DeadClass();
     control.CompilerPass deadClassPass = new control.CompilerPass(
         "Dead class elimination", ast, dceVisitor);
@@ -44,6 +46,8 @@ public class Main
     }    
 
     program = ast;
+    --count;
+	}
     
     return;
   }

@@ -8,7 +8,6 @@ public class DeadClass implements ast.Visitor
 {
   private java.util.HashSet<String> set;
   private java.util.LinkedList<String> worklist;
-  private ast.classs.T newClass;
   public ast.program.T program;
 @Override
     public void visit(Parent e) {
@@ -19,7 +18,7 @@ public class DeadClass implements ast.Visitor
   {
     this.set = new java.util.HashSet<String>();
     this.worklist = new java.util.LinkedList<String>();
-    this.newClass = null;
+    
     this.program = null;
   }
 
@@ -202,6 +201,11 @@ public class DeadClass implements ast.Visitor
   @Override
   public void visit(ast.type.Class t)
   {
+	String type=t.toString();
+	if(this.set.contains(type))
+		return;
+	this.set.add(type);
+	this.worklist.add(type);
     return;
   }
 
@@ -220,6 +224,7 @@ public class DeadClass implements ast.Visitor
   @Override
   public void visit(ast.dec.Dec d)
   {
+	d.type.accept(this);
     return;
   }
 
@@ -227,6 +232,10 @@ public class DeadClass implements ast.Visitor
   @Override
   public void visit(ast.method.Method m)
   {
+	for(ast.dec.T formal:m.formals)
+		formal.accept(this);
+	for(ast.dec.T local:m.locals)
+		local.accept(this);
     for (ast.stm.T s : m.stms)
       s.accept(this);
     m.retExp.accept(this);
@@ -237,12 +246,26 @@ public class DeadClass implements ast.Visitor
   @Override
   public void visit(ast.classs.Class c)
   {
+	  if(c.extendss==null)
+		  ;
+	  else
+	  {
+		  if(this.set.contains(c.extendss))
+			  return;
+		  this.set.add(c.extendss);
+		  this.worklist.add(c.extendss);
+	  }
+	  for(ast.dec.T dec:c.decs)
+		  dec.accept(this);
+	  for(ast.method.T method:c.methods)
+		  method.accept(this);
   }
 
   // main class
   @Override
   public void visit(ast.mainClass.MainClass c)
   {
+	
     c.stm.accept(this);
     return;
   }
@@ -281,7 +304,7 @@ public class DeadClass implements ast.Visitor
     this.program =
     new ast.program.Program(p.mainClass, newClasses);
     
-    if (control.Control.trace.equals("ast.DeadClass")){
+    if (control.Control.isTracing("ast.DeadClass")){
       System.out.println("before optimization:");
       ast.PrettyPrintVisitor pp = new ast.PrettyPrintVisitor();
       p.accept(pp);

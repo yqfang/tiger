@@ -1,5 +1,8 @@
 package cfg.optimizations;
 
+import cfg.stm.NewIntArray;
+import cfg.type.IntStar;
+
 public class DeadCode implements cfg.Visitor
 {
   public cfg.program.T program;
@@ -135,5 +138,17 @@ public class DeadCode implements cfg.Visitor
   {
     this.program = p;
   }
+
+@Override
+public void visit(NewIntArray m) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void visit(IntStar t) {
+	// TODO Auto-generated method stub
+	
+}
 
 }
