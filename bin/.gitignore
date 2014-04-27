@@ -1,9 +1,0 @@
-/ast
-/cfg
-/codegen
-/control
-/elaborator
-/lexer
-/parser
-/util
-/Tiger.class
